@@ -63,7 +63,6 @@ view model =
         [ viewInput "text" "Name" model.name Name
         , viewInput "password" "Password" model.password Password
         , viewInput "password" "Re-enter Password" model.passwordAgain PasswordAgain
-        , viewValidation model
         ]
 
 
@@ -74,18 +73,90 @@ viewInput t p v toMsg =
 
 viewValidation : Model -> Html msg
 viewValidation model =
-    if String.length model.password < 8 then
-        div [ style "color" "gray" ] [ text "Too short" ]
+    let
+        password =
+            model.password
 
-    else if model.password == model.passwordAgain then
-        if containsUppercase model.password && containsLowercase model.password && containsNumeric model.password then
-            div [ style "color" "green" ] [ text "OK" ]
+        passwordAgain =
+            model.passwordAgain
+    in
+    if passwordLengthIsValid password then
+        if password == passwordAgain then
+            if passwordIsComplexEnough password then
+                renderPasswordIsAccepted
+
+            else
+                renderPasswordNotAcceptedWithReason password
 
         else
-            div [ style "color" "gray" ] [ text "Password must contain an uppercase, a lowercase, and a numeric character." ]
+            renderPasswordsAreMismatched
 
     else
-        div [ style "color" "red" ] [ text "Passwords do not match!" ]
+        renderPasswordIsTooShort
+
+
+renderPasswordNotAcceptedWithReason : String -> Html msg
+renderPasswordNotAcceptedWithReason password =
+    div [ style "color" "gray" ] [ password |> passwordNotAcceptedReason ]
+
+
+passwordNotAcceptedReason : String -> Html msg
+passwordNotAcceptedReason password =
+    ul [] (passwordNotAcceptedReasonList password)
+
+
+passwordNotAcceptedReasonList : String -> List (Html msg)
+passwordNotAcceptedReasonList password =
+    let
+        checks =
+            [ { function = containsUppercase, message = "contain an uppercase character" }
+            , { function = containsLowercase, message = "contains a lowercase character" }
+            , { function = containsNumeric, message = "contains a numeric character" }
+            ]
+    in
+    checks
+        |> List.filter (\f -> f.function password)
+        |> List.map (\n -> n.message)
+        |> assemblePasswordNotAcceptedReasons
+
+
+assemblePasswordNotAcceptedReasons : List String -> List (Html msg)
+assemblePasswordNotAcceptedReasons reasons =
+    [ text "stub" ]
+
+
+
+-- if String.length reasons > 2 then
+-- else if String.length reasons == 2 then
+-- reasons
+-- |> List.intersperse "and "
+-- else
+-- li [] [ reasons |> List.head |> withDefault "" ]
+
+
+renderPasswordIsAccepted : Html msg
+renderPasswordIsAccepted =
+    div [ style "color" "green" ] [ text "OK" ]
+
+
+passwordIsComplexEnough : String -> Bool
+passwordIsComplexEnough password =
+    containsUppercase password && containsLowercase password && containsNumeric password
+
+
+renderPasswordsAreMismatched : Html msg
+renderPasswordsAreMismatched =
+    div [ style "color" "red" ] [ text "Passwords do not match!" ]
+
+
+renderPasswordIsTooShort : Html msg
+renderPasswordIsTooShort =
+    div [ style "color" "gray" ] [ text "Password is too short!" ]
+
+
+passwordLengthIsValid : String -> Bool
+passwordLengthIsValid password =
+    String.length password >= 8
 
 
 containsUppercase : String -> Bool
