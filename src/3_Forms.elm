@@ -89,12 +89,17 @@ viewValidation model =
 
 containsUppercase : String -> Bool
 containsUppercase check = 
-    not (String.isEmpty (String.filter Char.isUpper check))
+    containsFilter check Char.isUpper
 
 containsLowercase : String -> Bool
 containsLowercase check =
-    not (String.isEmpty (String.filter Char.isLower check))
+    containsFilter check Char.isLower
 
 containsNumeric : String -> Bool
 containsNumeric check = 
-    not (String.isEmpty (String.filter Char.isDigit check))
+    containsFilter check Char.isDigit
+
+containsFilter : String -> (Char -> Bool) -> Bool
+containsFilter input filter =
+    not (String.isEmpty (String.filter filter input))
+    
