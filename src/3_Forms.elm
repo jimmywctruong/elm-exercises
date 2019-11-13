@@ -87,19 +87,22 @@ viewValidation model =
     else
         div [ style "color" "red" ] [ text "Passwords do not match!" ]
 
+
 containsUppercase : String -> Bool
-containsUppercase check = 
-    containsFilter check Char.isUpper
+containsUppercase input =
+    contains input Char.isUpper
+
 
 containsLowercase : String -> Bool
-containsLowercase check =
-    containsFilter check Char.isLower
+containsLowercase input =
+    contains input Char.isLower
+
 
 containsNumeric : String -> Bool
-containsNumeric check = 
-    containsFilter check Char.isDigit
+containsNumeric input =
+    contains input Char.isDigit
 
-containsFilter : String -> (Char -> Bool) -> Bool
-containsFilter input filter =
+
+contains : String -> (Char -> Bool) -> Bool
+contains input filter =
     not (String.isEmpty (String.filter filter input))
-    
