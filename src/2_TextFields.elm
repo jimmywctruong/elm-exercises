@@ -8,7 +8,7 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Html exposing (Attribute, Html, div, input, text)
+import Html exposing (Attribute, Html, br, div, input, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 
@@ -59,4 +59,13 @@ view model =
     div []
         [ input [ placeholder "Text to reverse", value model.content, onInput Change ] []
         , div [] [ text (String.reverse model.content) ]
+        , lengthDiv model
         ]
+
+
+lengthDiv : Model -> Html Msg
+lengthDiv model =
+    if String.length model.content > 0 then
+        div [] [ text ("Length: " ++ String.fromInt (String.length model.content)) ]
+    else
+        div [] []
