@@ -63,6 +63,7 @@ view model =
         [ viewInput "text" "Name" model.name Name
         , viewInput "password" "Password" model.password Password
         , viewInput "password" "Re-enter Password" model.passwordAgain PasswordAgain
+        , viewValidation model
         ]
 
 
