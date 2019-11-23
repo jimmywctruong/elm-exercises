@@ -20,14 +20,19 @@ main =
 
 type alias Model =
     { name : String
-    , password : String
+    , passwordModel : PasswordModel
+    }
+
+
+type alias PasswordModel =
+    { password : String
     , passwordAgain : String
     }
 
 
 init : Model
 init =
-    Model "" "" ""
+    Model "" (PasswordModel "" "")
 
 
 
@@ -47,10 +52,10 @@ update msg model =
             { model | name = name }
 
         Password password ->
-            { model | password = password }
+            { model | passwordModel = PasswordModel password model.passwordModel.passwordAgain }
 
-        PasswordAgain password ->
-            { model | passwordAgain = password }
+        PasswordAgain passwordAgain ->
+            { model | passwordModel = PasswordModel model.passwordModel.password passwordAgain }
 
 
 
@@ -61,8 +66,8 @@ view : Model -> Html Msg
 view model =
     div []
         [ viewInput "text" "Name" model.name Name
-        , viewInput "password" "Password" model.password Password
-        , viewInput "password" "Re-enter Password" model.passwordAgain PasswordAgain
+        , viewInput "password" "Password" model.passwordModel.password Password
+        , viewInput "password" "Re-enter Password" model.passwordModel.passwordAgain PasswordAgain
         , viewValidation model
         ]
 
@@ -74,95 +79,98 @@ viewInput t p v toMsg =
 
 viewValidation : Model -> Html msg
 viewValidation model =
-    let
-        password =
-            model.password
-
-        passwordAgain =
-            model.passwordAgain
-    in
-    if passwordLengthIsValid password then
-        if password == passwordAgain then
-            if passwordIsComplexEnough password then
-                renderPasswordIsAccepted
-
-            else
-                renderPasswordNotAcceptedWithReason password
-
-        else
-            renderPasswordsAreMismatched
+    if isPasswordValid model.passwordModel then
+        renderPasswordIsAccepted
 
     else
-        renderPasswordIsTooShort
+        model.passwordModel
+            |> passwordIsNotValidReasonList
+            |> renderPasswordIsNotValid
 
 
-renderPasswordNotAcceptedWithReason : String -> Html msg
-renderPasswordNotAcceptedWithReason password =
-    div [ style "color" "black" ] [ password |> passwordNotAcceptedReason ]
+isPasswordValid : PasswordModel -> Bool
+isPasswordValid passwordModel =
+    passwordModel
+        |> passwordIsNotValidReasonList
+        |> List.isEmpty
 
 
-passwordNotAcceptedReason : String -> Html msg
-passwordNotAcceptedReason password =
-    ul [] (passwordNotAcceptedReasonList password)
+renderPasswordIsNotValid : List String -> Html msg
+renderPasswordIsNotValid reasons =
+    div [ style "color" "black" ]
+        [ div [] [ text "Passwords must" ]
+        , ul []
+            (reasons
+                |> List.map (\n -> li [] [ text n ])
+            )
+        ]
 
 
-passwordNotAcceptedReasonList : String -> List (Html msg)
-passwordNotAcceptedReasonList password =
+passwordIsNotValidReasonList : PasswordModel -> List String
+passwordIsNotValidReasonList passwords =
     let
         checks =
-            [ { function = containsUppercase, message = "contain an uppercase character" }
-            , { function = containsLowercase, message = "contains a lowercase character" }
+            [ { function = passwordsMustMatch, message = "be equal" }
+            , { function = passwordsLengthAreValid, message = "be greater than or equal to 8 characters" }
+            , { function = passwordsContainUppercase, message = "contain an uppercase character" }
+            , { function = passwordsContainLowercase, message = "contain a lowercase character" }
             , { function = containsNumeric, message = "contains a numeric character" }
             ]
     in
     checks
-        |> List.filter (\f -> f.function password)
+        |> List.filter (\f -> not (f.function [passwords.password, passwords.passwordAgain] ))
         |> List.map (\n -> n.message)
-        |> assemblePasswordNotAcceptedReasons
 
-
-assemblePasswordNotAcceptedReasons : List String -> List (Html msg)
-assemblePasswordNotAcceptedReasons reasons =
-    [ text "stub" ]
 
 renderPasswordIsAccepted : Html msg
 renderPasswordIsAccepted =
     div [ style "color" "green" ] [ text "OK" ]
 
 
-passwordIsComplexEnough : String -> Bool
-passwordIsComplexEnough password =
-    containsUppercase password && containsLowercase password && containsNumeric password
+passwordsMustMatch : List String -> Bool
+passwordsMustMatch passwords =
+    List.all (\s -> s == (Maybe.withDefault "" (List.head passwords))) passwords
+    
+
+stringsAreEqual : String -> String -> Bool
+stringsAreEqual s1 s2 =
+    s1 == s2
+
+passwordsLengthAreValid : List String -> Bool
+passwordsLengthAreValid strings =
+    checkStrings strings (\n -> String.length n >= 8)
 
 
-renderPasswordsAreMismatched : Html msg
-renderPasswordsAreMismatched =
-    div [ style "color" "red" ] [ text "Passwords do not match!" ]
+checkStrings : List String -> (String -> Bool) -> Bool
+checkStrings strings function =
+    strings
+        |> List.map function
+        |> mustAllBeTrue
 
 
-renderPasswordIsTooShort : Html msg
-renderPasswordIsTooShort =
-    div [ style "color" "gray" ] [ text "Password is too short!" ]
+passwordsContainUppercase : List String -> Bool
+passwordsContainUppercase strings =
+    strings
+    |> List.map (\s -> contains s Char.isUpper)
+    |> mustAllBeTrue
+
+mustAllBeTrue : List Bool -> Bool
+mustAllBeTrue bools =
+    List.all (\b -> b) bools
 
 
-passwordLengthIsValid : String -> Bool
-passwordLengthIsValid password =
-    String.length password >= 8
+passwordsContainLowercase : List String -> Bool
+passwordsContainLowercase strings =
+    strings
+    |> List.map (\s -> contains s Char.isLower)
+    |> mustAllBeTrue
 
 
-containsUppercase : String -> Bool
-containsUppercase input =
-    contains input Char.isUpper
-
-
-containsLowercase : String -> Bool
-containsLowercase input =
-    contains input Char.isLower
-
-
-containsNumeric : String -> Bool
-containsNumeric input =
-    contains input Char.isDigit
+containsNumeric : List String -> Bool
+containsNumeric strings =
+    strings
+    |> List.map (\s -> contains s Char.isDigit )
+    |> mustAllBeTrue
 
 
 contains : String -> (Char -> Bool) -> Bool
