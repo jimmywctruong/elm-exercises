@@ -98,7 +98,7 @@ viewValidation model =
 
 renderPasswordNotAcceptedWithReason : String -> Html msg
 renderPasswordNotAcceptedWithReason password =
-    div [ style "color" "gray" ] [ password |> passwordNotAcceptedReason ]
+    div [ style "color" "black" ] [ password |> passwordNotAcceptedReason ]
 
 
 passwordNotAcceptedReason : String -> Html msg
