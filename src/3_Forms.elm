@@ -125,16 +125,6 @@ assemblePasswordNotAcceptedReasons : List String -> List (Html msg)
 assemblePasswordNotAcceptedReasons reasons =
     [ text "stub" ]
 
-
-
--- if String.length reasons > 2 then
--- else if String.length reasons == 2 then
--- reasons
--- |> List.intersperse "and "
--- else
--- li [] [ reasons |> List.head |> withDefault "" ]
-
-
 renderPasswordIsAccepted : Html msg
 renderPasswordIsAccepted =
     div [ style "color" "green" ] [ text "OK" ]
