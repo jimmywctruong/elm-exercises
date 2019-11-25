@@ -112,20 +112,13 @@ renderPasswordValidation validators passwords =
                     (\v ->
                         ( v.function passwords, v.message )
                     )
-                |> List.map (\t -> li [] [ text (annotatePasswordCriterion t) ])
+                |> List.map (\t -> li [] [ text (annotatePasswordCriterion (Tuple.first t) (Tuple.second t)) ])
             )
         ]
 
 
-annotatePasswordCriterion : ( Bool, String ) -> String
-annotatePasswordCriterion tuple =
-    let
-        bool =
-            Tuple.first tuple
-
-        message =
-            Tuple.second tuple
-    in
+annotatePasswordCriterion : Bool -> String -> String
+annotatePasswordCriterion bool message =
     if bool == True then
         "✔️ " ++ message
 
