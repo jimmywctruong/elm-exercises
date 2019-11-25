@@ -30,6 +30,12 @@ type alias PasswordModel =
     }
 
 
+type alias PasswordValidator =
+    { function : PasswordModel -> Bool
+    , message : String
+    }
+
+
 init : Model
 init =
     Model "" (PasswordModel "" "")
@@ -79,47 +85,60 @@ viewInput t p v toMsg =
 
 viewValidation : Model -> Html msg
 viewValidation model =
-    if isPasswordValid model.passwordModel then
+    let
+        validators =
+            [ PasswordValidator passwordsMustMatch "be equal"
+            , PasswordValidator passwordLengthIsValid "be greater than or equal to 8 characters"
+            , PasswordValidator passwordContainsUppercase "contain an uppercase character"
+            , PasswordValidator passwordContainsLowercase "contain a lowercase character"
+            , PasswordValidator passwordContainsNumeric "contains a numeric character"
+            ]
+    in
+    if isPasswordValid model.passwordModel validators then
         renderPasswordIsAccepted
 
     else
         model.passwordModel
-            |> passwordIsNotValidReasonList
-            |> renderPasswordIsNotValid
+            |> renderPasswordValidation validators
 
 
-isPasswordValid : PasswordModel -> Bool
-isPasswordValid passwordModel =
-    passwordModel
-        |> passwordIsNotValidReasonList
-        |> List.isEmpty
-
-
-renderPasswordIsNotValid : List String -> Html msg
-renderPasswordIsNotValid reasons =
+renderPasswordValidation : List PasswordValidator -> PasswordModel -> Html msg
+renderPasswordValidation validators passwords =
     div [ style "color" "black" ]
-        [ div [] [ text "Passwords must" ]
+        [ text "Passwords must"
         , ul []
-            (reasons
-                |> List.map (\n -> li [] [ text n ])
+            (validators
+                |> List.map
+                    (\v ->
+                        ( v.function passwords, v.message )
+                    )
+                |> List.map (\t -> li [] [ text (annotatePasswordCriterion t) ])
             )
         ]
 
 
-passwordIsNotValidReasonList : PasswordModel -> List String
-passwordIsNotValidReasonList passwords =
+annotatePasswordCriterion : ( Bool, String ) -> String
+annotatePasswordCriterion tuple =
     let
-        checks =
-            [ { function = passwordsMustMatch, message = "be equal" }
-            , { function = passwordsLengthAreValid, message = "be greater than or equal to 8 characters" }
-            , { function = passwordsContainUppercase, message = "contain an uppercase character" }
-            , { function = passwordsContainLowercase, message = "contain a lowercase character" }
-            , { function = containsNumeric, message = "contains a numeric character" }
-            ]
+        bool =
+            Tuple.first tuple
+
+        message =
+            Tuple.second tuple
     in
-    checks
-        |> List.filter (\f -> not (f.function [passwords.password, passwords.passwordAgain] ))
-        |> List.map (\n -> n.message)
+    if bool == True then
+        "✔️ " ++ message
+
+    else
+        "❌ " ++ message
+
+
+isPasswordValid : PasswordModel -> List PasswordValidator -> Bool
+isPasswordValid passwords validators =
+    List.all (\b -> b)
+        (validators
+            |> List.map (\v -> v.function passwords)
+        )
 
 
 renderPasswordIsAccepted : Html msg
@@ -127,50 +146,29 @@ renderPasswordIsAccepted =
     div [ style "color" "green" ] [ text "OK" ]
 
 
-passwordsMustMatch : List String -> Bool
+passwordsMustMatch : PasswordModel -> Bool
 passwordsMustMatch passwords =
-    List.all (\s -> s == (Maybe.withDefault "" (List.head passwords))) passwords
-    
-
-stringsAreEqual : String -> String -> Bool
-stringsAreEqual s1 s2 =
-    s1 == s2
-
-passwordsLengthAreValid : List String -> Bool
-passwordsLengthAreValid strings =
-    checkStrings strings (\n -> String.length n >= 8)
+    passwords.password == passwords.passwordAgain
 
 
-checkStrings : List String -> (String -> Bool) -> Bool
-checkStrings strings function =
-    strings
-        |> List.map function
-        |> mustAllBeTrue
+passwordLengthIsValid : PasswordModel -> Bool
+passwordLengthIsValid passwords =
+    String.length passwords.password >= 8
 
 
-passwordsContainUppercase : List String -> Bool
-passwordsContainUppercase strings =
-    strings
-    |> List.map (\s -> contains s Char.isUpper)
-    |> mustAllBeTrue
-
-mustAllBeTrue : List Bool -> Bool
-mustAllBeTrue bools =
-    List.all (\b -> b) bools
+passwordContainsUppercase : PasswordModel -> Bool
+passwordContainsUppercase passwords =
+    contains passwords.password Char.isUpper
 
 
-passwordsContainLowercase : List String -> Bool
-passwordsContainLowercase strings =
-    strings
-    |> List.map (\s -> contains s Char.isLower)
-    |> mustAllBeTrue
+passwordContainsLowercase : PasswordModel -> Bool
+passwordContainsLowercase passwords =
+    contains passwords.password Char.isLower
 
 
-containsNumeric : List String -> Bool
-containsNumeric strings =
-    strings
-    |> List.map (\s -> contains s Char.isDigit )
-    |> mustAllBeTrue
+passwordContainsNumeric : PasswordModel -> Bool
+passwordContainsNumeric passwords =
+    contains passwords.password Char.isDigit
 
 
 contains : String -> (Char -> Bool) -> Bool
