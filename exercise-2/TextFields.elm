@@ -5,7 +5,7 @@
 --
 
 
-module Main exposing (Model, Msg(..), init, main, update, view)
+module TextFields exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
 import Html exposing (Attribute, Html, br, div, input, text)
