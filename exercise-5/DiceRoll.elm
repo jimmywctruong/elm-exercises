@@ -8,6 +8,7 @@ module DiceRoll exposing (..)
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Random
 
@@ -30,13 +31,22 @@ main =
 
 
 type alias Model =
-    { dieFace : Int
+    { dieFace : Face
     }
+
+
+type Face
+    = One
+    | Two
+    | Three
+    | Four
+    | Five
+    | Six
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 1
+    ( Model One
     , Cmd.none
     )
 
@@ -59,9 +69,36 @@ update msg model =
             )
 
         NewFace newFace ->
-            ( Model newFace
+            ( diceModelFromNumber newFace
             , Cmd.none
             )
+
+
+diceModelFromNumber : Int -> Model
+diceModelFromNumber n =
+    Model
+        (case n of
+            1 ->
+                One
+
+            2 ->
+                Two
+
+            3 ->
+                Three
+
+            4 ->
+                Four
+
+            5 ->
+                Five
+
+            6 ->
+                Six
+
+            _ ->
+                One
+        )
 
 
 
@@ -69,7 +106,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -80,6 +117,39 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text (String.fromInt model.dieFace) ]
+        [ viewDieFace model.dieFace
         , button [ onClick Roll ] [ text "Roll" ]
         ]
+
+
+viewDieFace : Face -> Html Msg
+viewDieFace dieFace =
+    -- text (dieFace |> dieFaceNumber |> String.fromInt)
+    img [ src (dieFaceFileName dieFace), height 50, width 50 ] []
+
+
+dieFaceFileName : Face -> String
+dieFaceFileName dieFace =
+    "die" ++ String.fromInt (dieFaceNumber dieFace) ++ ".svg"
+
+
+dieFaceNumber : Face -> Int
+dieFaceNumber dieFace =
+    case dieFace of
+        One ->
+            1
+
+        Two ->
+            2
+
+        Three ->
+            3
+
+        Four ->
+            4
+
+        Five ->
+            5
+
+        Six ->
+            6
